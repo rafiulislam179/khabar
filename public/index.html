@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="bn">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>খাবার চেক — Khabar Check</title>
+  <meta name="description" content="প্যাকেট খাবারের লেবেলের ছবি তুলুন, বাংলায় জানুন লবণ, চিনি ও চর্বি কতটা।">
+  <meta name="theme-color" content="#14532d">
+  <link rel="manifest" href="/manifest.json">
+  <link rel="icon" href="/icons/icon-192.png">
+  <link rel="apple-touch-icon" href="/icons/icon-192.png">
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <header class="top">
+    <div class="brand">
+      <img src="/icons/icon-192.png" alt="" width="36" height="36">
+      <div>
+        <h1>খাবার চেক</h1>
+        <p class="sub">লেবেল দেখে বুঝে খান</p>
+      </div>
+    </div>
+    <button id="installBtn" class="install" hidden>অ্যাপ ইনস্টল</button>
+  </header>
+
+  <main>
+    <!-- HOME -->
+    <section id="home" class="card">
+      <h2>প্যাকেটের পেছনের <span class="hl">পুষ্টি-তালিকার</span> ছবি তুলুন</h2>
+      <p class="muted">চিপস, বিস্কুট, নুডলস, চানাচুর, পানীয় — লবণ, চিনি আর চর্বি কতটা, বাংলায় জানুন।</p>
+
+      <fieldset class="mode" aria-label="মোড">
+        <label><input type="radio" name="mode" value="general" checked> সাধারণ</label>
+        <label><input type="radio" name="mode" value="tiffin"> বাচ্চার টিফিন</label>
+      </fieldset>
+
+      <label class="cta" for="photo">
+        <span class="cta-icon" aria-hidden="true">📷</span>
+        <span>ছবি তুলুন / বাছুন</span>
+      </label>
+      <input id="photo" type="file" accept="image/*" capture="environment" hidden>
+
+      <ul class="tips">
+        <li>আলোতে, কাছে থেকে তুলুন</li>
+        <li>পুরো টেবিলটা ফ্রেমে রাখুন</li>
+        <li>ঝাপসা হলে আবার তুলুন</li>
+      </ul>
+    </section>
+
+    <!-- LOADING -->
+    <section id="loading" class="card center" hidden>
+      <img id="preview" class="preview" alt="আপনার তোলা ছবি">
+      <div class="spinner" aria-hidden="true"></div>
+      <p>লেবেল পড়া হচ্ছে…</p>
+      <p class="muted small">সাধারণত ৫–১৫ সেকেন্ড লাগে</p>
+    </section>
+
+    <!-- RESULT -->
+    <section id="result" class="card" hidden aria-live="polite">
+      <div id="verdict" class="verdict">
+        <span id="verdictDot" class="dot"></span>
+        <span id="verdictText"></span>
+      </div>
+
+      <div class="rows" id="rows"></div>
+
+      <div class="message" id="message"></div>
+
+      <p class="muted small">এটি চিকিৎসা পরামর্শ নয়। সাধারণ স্বাস্থ্য-নির্দেশিকা মাত্র।</p>
+      <button id="againBtn" class="secondary">আরেকটা স্ক্যান করুন</button>
+    </section>
+
+    <!-- ERROR -->
+    <section id="error" class="card center" hidden aria-live="assertive">
+      <p class="err-icon" aria-hidden="true">⚠️</p>
+      <p id="errorText"></p>
+      <button id="retryBtn" class="secondary">আবার চেষ্টা করুন</button>
+    </section>
+
+    <!-- HISTORY -->
+    <section id="historyCard" class="card" hidden>
+      <h3>আগের স্ক্যান</h3>
+      <ul id="history" class="history"></ul>
+    </section>
+
+    <section class="card about">
+      <h3>রং মানে কী?</h3>
+      <p><span class="chip GREEN">কম</span> ভালো পছন্দ</p>
+      <p><span class="chip AMBER">মাঝারি</span> মাঝে মাঝে খাওয়া যায়</p>
+      <p><span class="chip RED">বেশি</span> কম খাওয়াই ভালো</p>
+      <p class="muted small">আপনার কোনো ব্যক্তিগত তথ্য বা ছবি আমরা সংরক্ষণ করি না। শুধু নাম-পরিচয়হীন পুষ্টি-সংখ্যা জমা থাকে।</p>
+    </section>
+  </main>
+
+  <footer class="foot">খাবার চেক · NSU Public Health 101 প্রজেক্ট</footer>
+
+  <script src="/app.js" defer></script>
+</body>
+</html>

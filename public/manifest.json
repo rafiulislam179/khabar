@@ -1,0 +1,17 @@
+{
+  "name": "খাবার চেক — Khabar Check",
+  "short_name": "খাবার চেক",
+  "description": "প্যাকেট খাবারের লেবেলের ছবি তুলুন, বাংলায় জানুন লবণ, চিনি ও চর্বি কতটা।",
+  "lang": "bn",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f4f7f2",
+  "theme_color": "#14532d",
+  "icons": [
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

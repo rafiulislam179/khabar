@@ -1,0 +1,12 @@
+{
+  "version": "placeholder-uk-fsa-v1",
+  "source": "PLACEHOLDER: UK FSA front-of-pack thresholds (foods, per 100 g). Replace with WHO SEARO 2016 nutrient profile model values.",
+  "basis": "per_100g",
+  "nutrients": {
+    "sodium": { "field": "sodium_mg", "unit": "mg", "green_max": 120, "amber_max": 600 },
+    "sugar": { "field": "sugar_g", "unit": "g", "green_max": 5, "amber_max": 22.5 },
+    "fat": { "field": "fat_g", "unit": "g", "green_max": 3, "amber_max": 17.5 },
+    "saturated_fat": { "field": "saturated_fat_g", "unit": "g", "green_max": 1.5, "amber_max": 5 }
+  },
+  "overall_policy": "worst_of"
+}
