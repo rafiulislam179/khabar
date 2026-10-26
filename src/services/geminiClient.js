@@ -1,7 +1,7 @@
 'use strict';
 const { GoogleGenAI } = require('@google/genai');
 
-const TIMEOUT_MS = 20000;
+const TIMEOUT_MS = Number(process.env.GEMINI_TIMEOUT_MS) || 45000;
 let ai = null;
 function getClient() {
   if (!ai) ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
@@ -30,7 +30,9 @@ async function generateJson({ parts, systemInstruction, responseSchema }) {
       responseMimeType: 'application/json',
       responseSchema,
       temperature: 0,
-      maxOutputTokens: 1024,
+      // Newer models 'think' before answering and that counts against this limit,
+      // so keep it generous or the JSON answer comes back empty.
+      maxOutputTokens: 8192,
     },
   });
 
@@ -42,10 +44,20 @@ async function generateJson({ parts, systemInstruction, responseSchema }) {
   try {
     const response = await Promise.race([call, timeout]);
     const text = typeof response.text === 'function' ? response.text() : response.text;
-    if (!text) throw new GeminiError('Empty Gemini response');
+    if (!text) {
+      const finish = response?.candidates?.[0]?.finishReason || 'unknown';
+      throw new GeminiError(`Empty Gemini response (finishReason: ${finish})`);
+    }
     return JSON.parse(text);
   } catch (err) {
-    if (err instanceof GeminiError) throw err;
+    if (err instanceof GeminiError) {
+      console.error('[gemini]', err.message, '| model:', model());
+      throw err;
+    }
+    // Log the API's reason (e.g. invalid key, unknown model, quota) — never image/user content.
+    const status = err.status || err.code || '';
+    const reason = String(err.message || err.name).slice(0, 300);
+    console.error('[gemini] call failed:', status, reason, '| model:', model());
     throw new GeminiError(`Gemini call failed: ${err.name}`);
   } finally {
     clearTimeout(timer);
