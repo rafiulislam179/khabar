@@ -1,0 +1,170 @@
+'use strict';
+(function () {
+  const $ = (id) => document.getElementById(id);
+  const sections = ['home', 'loading', 'result', 'error'];
+
+  const LABEL = { GREEN: 'কম', AMBER: 'মাঝারি', RED: 'বেশি', UNKNOWN: 'তথ্য নেই' };
+  const VERDICT = {
+    GREEN: 'ভালো পছন্দ',
+    AMBER: 'মাঝে মাঝে খাওয়া যায়',
+    RED: 'কম খাওয়াই ভালো',
+    UNKNOWN: 'যথেষ্ট তথ্য নেই',
+  };
+  const NUTRIENTS = [
+    { key: 'sodium', name: 'লবণ', value: (p) => (p.salt_g != null ? `${bn(p.salt_g)} গ্রাম` : '—') },
+    { key: 'sugar', name: 'চিনি', value: (p) => (p.sugar_g != null ? `${bn(p.sugar_g)} গ্রাম` : '—') },
+    { key: 'fat', name: 'চর্বি', value: (p) => (p.fat_g != null ? `${bn(p.fat_g)} গ্রাম` : '—') },
+    { key: 'saturated_fat', name: 'স্যাচুরেটেড চর্বি', value: (p) => (p.saturated_fat_g != null ? `${bn(p.saturated_fat_g)} গ্রাম` : '—') },
+  ];
+  const BN = ['০', '১', '২', '৩', '৪', '৫', '৬', '৭', '৮', '৯'];
+  function bn(n) {
+    return Number(n).toLocaleString('en-US', { maximumFractionDigits: 1 }).replace(/\d/g, (d) => BN[d]);
+  }
+
+  function show(id) {
+    sections.forEach((s) => { $(s).hidden = s !== id; });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  // Resize + re-encode on the phone: smaller upload (saves data) and drops EXIF/GPS before it leaves the device.
+  async function compress(file) {
+    const MAX = 1600;
+    try {
+      const bitmap = await createImageBitmap(file, { imageOrientation: 'from-image' });
+      const scale = Math.min(1, MAX / Math.max(bitmap.width, bitmap.height));
+      const canvas = document.createElement('canvas');
+      canvas.width = Math.round(bitmap.width * scale);
+      canvas.height = Math.round(bitmap.height * scale);
+      canvas.getContext('2d').drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+      bitmap.close && bitmap.close();
+      const blob = await new Promise((res) => canvas.toBlob(res, 'image/jpeg', 0.85));
+      return blob || file;
+    } catch {
+      return file; // older browsers: server still strips metadata
+    }
+  }
+
+  async function scan(file) {
+    if (!file) return;
+    const previewUrl = URL.createObjectURL(file);
+    $('preview').src = previewUrl;
+    show('loading');
+
+    const mode = document.querySelector('input[name="mode"]:checked').value;
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 90000);
+
+    try {
+      const blob = await compress(file);
+      const form = new FormData();
+      form.append('photo', blob, 'label.jpg');
+      form.append('mode', mode);
+
+      const res = await fetch('/api/scan', { method: 'POST', body: form, signal: controller.signal });
+      let data = null;
+      try { data = await res.json(); } catch { /* non-JSON */ }
+
+      if (!res.ok || !data || !data.ok) {
+        throw new Error((data && data.message) || 'এখন সমস্যা হচ্ছে, একটু পরে চেষ্টা করুন।');
+      }
+      renderResult(data);
+      saveHistory(data);
+    } catch (err) {
+      const msg = err.name === 'AbortError'
+        ? 'সময় বেশি লাগছে। ইন্টারনেট দেখে আবার চেষ্টা করুন।'
+        : (navigator.onLine === false ? 'ইন্টারনেট সংযোগ নেই।' : err.message);
+      $('errorText').textContent = msg;
+      show('error');
+    } finally {
+      clearTimeout(timer);
+      URL.revokeObjectURL(previewUrl);
+      $('photo').value = '';
+    }
+  }
+
+  function renderResult(data) {
+    const overall = (data.ratings && data.ratings.overall) || 'UNKNOWN';
+    const v = $('verdict');
+    v.className = `verdict ${overall}`;
+    $('verdictText').textContent = VERDICT[overall] || VERDICT.UNKNOWN;
+
+    const rows = $('rows');
+    rows.textContent = '';
+    for (const n of NUTRIENTS) {
+      const rating = (data.ratings && data.ratings[n.key]) || 'UNKNOWN';
+      const row = document.createElement('div');
+      row.className = 'row';
+      const name = document.createElement('span');
+      name.className = 'name';
+      name.textContent = n.name;
+      const val = document.createElement('span');
+      val.className = 'val';
+      val.textContent = n.value(data.per100g || {});
+      const chip = document.createElement('span');
+      chip.className = `chip ${rating}`;
+      chip.textContent = LABEL[rating] || LABEL.UNKNOWN;
+      row.append(name, val, chip);
+      rows.append(row);
+    }
+
+    // textContent only: server text is never treated as HTML.
+    $('message').textContent = data.message || '';
+    show('result');
+  }
+
+  // --- History (this phone only; optional; safe if storage is blocked) ---
+  const KEY = 'khabar-history';
+  function readHistory() {
+    try { return JSON.parse(localStorage.getItem(KEY) || '[]'); } catch { return []; }
+  }
+  function saveHistory(data) {
+    try {
+      const list = readHistory();
+      list.unshift({ t: Date.now(), overall: data.ratings.overall, salt: data.per100g.salt_g });
+      localStorage.setItem(KEY, JSON.stringify(list.slice(0, 5)));
+    } catch { /* ignore */ }
+    renderHistory();
+  }
+  function renderHistory() {
+    const list = readHistory();
+    $('historyCard').hidden = list.length === 0;
+    const ul = $('history');
+    ul.textContent = '';
+    for (const h of list) {
+      const li = document.createElement('li');
+      const when = document.createElement('span');
+      when.textContent = new Date(h.t).toLocaleString('bn-BD', { dateStyle: 'medium', timeStyle: 'short' });
+      const chip = document.createElement('span');
+      chip.className = `chip ${h.overall}`;
+      chip.textContent = LABEL[h.overall] || LABEL.UNKNOWN;
+      li.append(when, chip);
+      ul.append(li);
+    }
+  }
+
+  // --- Events ---
+  $('photo').addEventListener('change', (e) => scan(e.target.files && e.target.files[0]));
+  $('againBtn').addEventListener('click', () => show('home'));
+  $('retryBtn').addEventListener('click', () => show('home'));
+
+  // --- Install as app (Android Chrome) ---
+  let deferredPrompt = null;
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+    $('installBtn').hidden = false;
+  });
+  $('installBtn').addEventListener('click', async () => {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    await deferredPrompt.userChoice;
+    deferredPrompt = null;
+    $('installBtn').hidden = true;
+  });
+
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js').catch(() => {}));
+  }
+
+  renderHistory();
+})();
