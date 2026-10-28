@@ -52,7 +52,7 @@
 
     const mode = document.querySelector('input[name="mode"]:checked').value;
     const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 45000);
+    const timer = setTimeout(() => controller.abort(), 90000);
 
     try {
       const blob = await compress(file);
@@ -78,11 +78,23 @@
     } finally {
       clearTimeout(timer);
       URL.revokeObjectURL(previewUrl);
-      $('photo').value = '';
+      $('photoCamera').value = '';
+      $('photoGallery').value = '';
     }
   }
 
+  function renderProduct(p) {
+    const box = $('product');
+    if (!p || !p.name) { box.hidden = true; return; }
+    $('productName').textContent = [p.brand, p.name].filter(Boolean).join(' · ');
+    $('productMemory').textContent = p.scan_count > 1
+      ? `🧠 ${bn(p.scan_count)} বার স্ক্যান হয়েছে, তাই ফলাফল স্থির করা হয়েছে`
+      : '🆕 প্রথমবার স্ক্যান হলো, পরের বার আরও স্থির হবে';
+    box.hidden = false;
+  }
+
   function renderResult(data) {
+    renderProduct(data.product);
     const overall = (data.ratings && data.ratings.overall) || 'UNKNOWN';
     const v = $('verdict');
     v.className = `verdict ${overall}`;
@@ -143,7 +155,19 @@
   }
 
   // --- Events ---
-  $('photo').addEventListener('change', (e) => scan(e.target.files && e.target.files[0]));
+  $('photoCamera').addEventListener('change', (e) => scan(e.target.files && e.target.files[0]));
+  $('photoGallery').addEventListener('change', (e) => scan(e.target.files && e.target.files[0]));
+
+  // --- Consent (first visit; stored on this phone only) ---
+  const CONSENT_KEY = 'khabar-consent-v1';
+  function hasConsent() {
+    try { return localStorage.getItem(CONSENT_KEY) === 'yes'; } catch { return false; }
+  }
+  if (!hasConsent()) $('consent').hidden = false;
+  $('consentAccept').addEventListener('click', () => {
+    try { localStorage.setItem(CONSENT_KEY, 'yes'); } catch { /* still allow this session */ }
+    $('consent').hidden = true;
+  });
   $('againBtn').addEventListener('click', () => show('home'));
   $('retryBtn').addEventListener('click', () => show('home'));
 

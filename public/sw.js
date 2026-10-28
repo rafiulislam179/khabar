@@ -1,6 +1,6 @@
 'use strict';
 // App-shell cache so the app opens instantly. Scans (/api) are NEVER cached.
-const CACHE = 'khabar-check-v1';
+const CACHE = 'khabar-check-v2';
 const SHELL = ['/', '/index.html', '/styles.css', '/app.js', '/manifest.json', '/icons/icon-192.png', '/icons/icon-512.png'];
 
 self.addEventListener('install', (e) => {

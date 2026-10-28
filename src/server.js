@@ -5,6 +5,10 @@ const { loadRules } = require('./services/ruleEngine');
 const { runPipeline } = require('./services/pipeline');
 const { saveAnonymousScan } = require('./services/scanRepository');
 const { saltToTeaspoons } = require('./services/nutritionMath');
+const { mongoStore } = require('./services/productMemory');
+const Product = require('./models/Product');
+
+const productStore = mongoStore(Product);
 
 // Required for the web app. Twilio is OPTIONAL (WhatsApp turns on only if its keys exist).
 const REQUIRED = ['GEMINI_API_KEY', 'MONGODB_URI'];
@@ -26,16 +30,19 @@ const app = require('./app');
 const { setWebScanProcessor } = require('./routes/scan');
 
 async function scanAndSave(image, ctx) {
-  const { replyText, per100g, ruleResults } = await runPipeline(image, { mode: ctx.mode || 'general' });
+  const { replyText, per100g, ruleResults, product } = await runPipeline(
+    image, { mode: ctx.mode || 'general' }, { productStore }
+  );
   await saveAnonymousScan({ per100g, ruleResults, channel: ctx.channel });
-  return { replyText, per100g, ruleResults };
+  return { replyText, per100g, ruleResults, product };
 }
 
 // Web app: return structured result for the UI.
 setWebScanProcessor(async (image, ctx) => {
-  const { replyText, per100g, ruleResults } = await scanAndSave(image, ctx);
+  const { replyText, per100g, ruleResults, product } = await scanAndSave(image, ctx);
   return {
     message: replyText,
+    product: product || null,
     ratings: {
       sodium: ruleResults.sodium,
       sugar: ruleResults.sugar,

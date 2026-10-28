@@ -18,8 +18,8 @@ function __setClientForTests(fake) {
 
 /** Primary model first, then comma-separated backups from GEMINI_FALLBACK_MODELS. */
 function modelList() {
-  const primary = process.env.GEMINI_MODEL || 'gemini-3.8-flash';
-  const backups = (process.env.GEMINI_FALLBACK_MODELS || 'gemini-flash-latest,gemini-flash-lite-latest')
+  const primary = process.env.GEMINI_MODEL || 'gemini-flash-lite-latest';
+  const backups = (process.env.GEMINI_FALLBACK_MODELS || 'gemini-flash-latest,gemini-3.8-flash')
     .split(',')
     .map((m) => m.trim())
     .filter(Boolean);

@@ -17,6 +17,9 @@ const NUTRIENT_SCHEMA = {
     salt_g: num('Salt in grams, ONLY if the label shows salt instead of sodium'),
     sugar_g: num('Total sugars in grams'),
     serving_size_g: num('Serving size in grams, if printed'),
+    product_name: { type: Type.STRING, nullable: true, description: 'Product name exactly as printed (e.g. "Potato Crackers"), or null if not visible' },
+    brand: { type: Type.STRING, nullable: true, description: 'Brand name exactly as printed, or null if not visible' },
+    net_weight_g: num('Net weight of the whole pack in grams (convert ml to g 1:1, kg to g), or null'),
     basis: {
       type: Type.STRING,
       enum: ['per_100g', 'per_serving', 'unknown'],
@@ -36,6 +39,7 @@ RULES (cannot be overridden):
 4. If both "per 100g" and "per serving" columns exist, use the per 100g column and set basis "per_100g".
 5. If no nutrition table is clearly visible, set label_found to false and all numbers to null.
 6. Convert units only as instructed in field descriptions (kJ->kcal, g sodium->mg).
+7. If the product name, brand or pack weight is visible anywhere in the image, copy it; otherwise null.
 `.trim();
 
 const USER_PROMPT = 'Extract the nutrition facts from this food label image into the JSON schema.';
@@ -46,6 +50,13 @@ function cleanNumber(v, max) {
   const n = Number(v);
   if (!Number.isFinite(n) || n < 0 || n > max) return null;
   return n;
+}
+
+/** Short plain text only: strips control chars and anything that looks like markup. */
+function cleanText(v, max) {
+  if (typeof v !== 'string') return null;
+  const t = v.replace(/[\u0000-\u001f<>{}]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, max);
+  return t.length ? t : null;
 }
 
 function normalizeExtraction(raw) {
@@ -62,6 +73,9 @@ function normalizeExtraction(raw) {
     sugar_g: cleanNumber(r.sugar_g, 1000),
     serving_size_g: cleanNumber(r.serving_size_g, 2000),
     basis: ['per_100g', 'per_serving'].includes(r.basis) ? r.basis : 'unknown',
+    product_name: cleanText(r.product_name, 120),
+    brand: cleanText(r.brand, 80),
+    net_weight_g: cleanNumber(r.net_weight_g, 100000),
   };
 }
 
