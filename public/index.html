@@ -23,6 +23,20 @@
     <button id="installBtn" class="install" hidden>অ্যাপ ইনস্টল</button>
   </header>
 
+  <!-- CONSENT (first visit) -->
+  <div id="consent" class="consent" role="dialog" aria-modal="true" aria-labelledby="consentTitle" hidden>
+    <div class="consent-box">
+      <h2 id="consentTitle">শুরু করার আগে</h2>
+      <ul>
+        <li>আপনার তোলা ছবি পুষ্টি-তথ্য পড়ার জন্য <b>Google Gemini AI</b>-তে পাঠানো হয়। ছবি আমরা সংরক্ষণ করি না, লোকেশন (GPS) তথ্য আগেই মুছে ফেলা হয়।</li>
+        <li>নাম, ফোন নম্বর বা অন্য ব্যক্তিগত তথ্য নেওয়া হয় না। শুধু নাম-পরিচয়হীন পুষ্টি-সংখ্যা জমা থাকে।</li>
+        <li>এটি <b>চিকিৎসা পরামর্শ নয়</b>। অসুস্থ বোধ করলে ডাক্তার দেখান।</li>
+        <li>১৮ বছরের কম হলে অভিভাবকের অনুমতি নিয়ে ব্যবহার করুন।</li>
+      </ul>
+      <button id="consentAccept" class="cta">বুঝেছি, শুরু করি</button>
+    </div>
+  </div>
+
   <main>
     <!-- HOME -->
     <section id="home" class="card">
@@ -34,11 +48,18 @@
         <label><input type="radio" name="mode" value="tiffin"> বাচ্চার টিফিন</label>
       </fieldset>
 
-      <label class="cta" for="photo">
-        <span class="cta-icon" aria-hidden="true">📷</span>
-        <span>ছবি তুলুন / বাছুন</span>
-      </label>
-      <input id="photo" type="file" accept="image/*" capture="environment" hidden>
+      <div class="cta-row">
+        <label class="cta" for="photoCamera">
+          <span class="cta-icon" aria-hidden="true">📷</span>
+          <span>ছবি তুলুন</span>
+        </label>
+        <label class="cta cta-alt" for="photoGallery">
+          <span class="cta-icon" aria-hidden="true">🖼️</span>
+          <span>গ্যালারি থেকে</span>
+        </label>
+      </div>
+      <input id="photoCamera" type="file" accept="image/*" capture="environment" hidden>
+      <input id="photoGallery" type="file" accept="image/*" hidden>
 
       <ul class="tips">
         <li>আলোতে, কাছে থেকে তুলুন</li>
@@ -57,6 +78,10 @@
 
     <!-- RESULT -->
     <section id="result" class="card" hidden aria-live="polite">
+      <div id="product" class="product" hidden>
+        <span id="productName" class="product-name"></span>
+        <span id="productMemory" class="product-memory"></span>
+      </div>
       <div id="verdict" class="verdict">
         <span id="verdictDot" class="dot"></span>
         <span id="verdictText"></span>
