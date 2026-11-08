@@ -4,7 +4,7 @@ const mongoose = require('mongoose');
 const { loadRules } = require('./services/ruleEngine');
 const { runPipeline } = require('./services/pipeline');
 const { saveAnonymousScan } = require('./services/scanRepository');
-const { saltToTeaspoons } = require('./services/nutritionMath');
+const { toWebResponse } = require('./services/webResponse');
 const { mongoStore } = require('./services/productMemory');
 const Product = require('./models/Product');
 
@@ -30,38 +30,19 @@ const app = require('./app');
 const { setWebScanProcessor } = require('./routes/scan');
 
 async function scanAndSave(image, ctx) {
-  const { replyText, per100g, ruleResults, product } = await runPipeline(
-    image, { mode: ctx.mode || 'general' }, { productStore }
-  );
-  await saveAnonymousScan({ per100g, ruleResults, channel: ctx.channel });
-  return { replyText, per100g, ruleResults, product };
+  const out = await runPipeline(image, { mode: ctx.mode || 'general' }, { productStore });
+  if (out.type === 'label') {
+    try {
+      await saveAnonymousScan({ per100g: out.per100g, ruleResults: out.ruleResults, channel: ctx.channel });
+    } catch (err) {
+      console.error('[scan] save failed:', err.name); // never block the user's result
+    }
+  }
+  return out;
 }
 
 // Web app: return structured result for the UI.
-setWebScanProcessor(async (image, ctx) => {
-  const { replyText, per100g, ruleResults, product } = await scanAndSave(image, ctx);
-  return {
-    message: replyText,
-    product: product || null,
-    ratings: {
-      sodium: ruleResults.sodium,
-      sugar: ruleResults.sugar,
-      fat: ruleResults.fat,
-      saturated_fat: ruleResults.saturated_fat,
-      overall: ruleResults.overall,
-    },
-    per100g: {
-      energy_kcal: per100g.energy_kcal ?? null,
-      sodium_mg: per100g.sodium_mg ?? null,
-      salt_g: per100g.salt_g ?? null,
-      salt_tsp: per100g.salt_g != null ? saltToTeaspoons(per100g.salt_g) : null,
-      sugar_g: per100g.sugar_g ?? null,
-      fat_g: per100g.fat_g ?? null,
-      saturated_fat_g: per100g.saturated_fat_g ?? null,
-    },
-    rules_version: ruleResults.rules_version,
-  };
-});
+setWebScanProcessor(async (image, ctx) => toWebResponse(await scanAndSave(image, ctx)));
 
 // WhatsApp: return text only.
 if (twilioEnabled) {

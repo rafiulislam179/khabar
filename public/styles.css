@@ -157,3 +157,22 @@ main { max-width: 560px; margin: 0 auto; padding: 0 16px 24px; display: grid; ga
 .consent-box ul { padding-left: 18px; margin: 0 0 16px; display: grid; gap: 8px; font-size: .95rem; }
 .consent-box .cta { width: 100%; border: 0; font: inherit; font-weight: 700; }
 @media (min-width: 600px) { .consent { align-items: center; } }
+
+/* --- Meal result (v5) --- */
+.kcal-total { display: flex; flex-direction: column; align-items: center; margin: 14px 0 6px; }
+.kcal-total strong { font-size: 1.6rem; color: var(--brand); }
+.meal-items { display: flex; flex-direction: column; gap: 10px; margin-top: 10px; }
+.meal-item { border: 1px solid var(--line); border-radius: 14px; padding: 12px; }
+.meal-item .head { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.meal-item .dname { font-weight: 600; }
+.meal-item .kcal { color: var(--muted); font-size: .9rem; margin-top: 4px; }
+.meal-item .levels { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; font-size: .82rem; }
+.meal-item .levels span { border: 1px solid var(--line); border-radius: 999px; padding: 2px 8px; }
+.meal-item .levels .high { border-color: var(--red); color: var(--red); }
+.portion { display: flex; gap: 6px; margin-top: 10px; }
+.portion button {
+  flex: 1; min-height: 40px; border-radius: 10px; border: 1px solid var(--line);
+  background: transparent; color: var(--text); font: inherit; font-size: .88rem; cursor: pointer;
+}
+.portion button[aria-pressed="true"] { border-color: var(--brand-2); background: color-mix(in srgb, var(--brand-2) 14%, transparent); color: var(--brand); font-weight: 600; }
+.debug { font-size: .75rem; color: var(--muted); word-break: break-word; margin-top: 8px; }

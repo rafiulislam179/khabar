@@ -37,7 +37,7 @@ function setWebScanProcessor(fn) {
   processScan = fn;
 }
 
-const STATUS = { NOT_A_LABEL: 422, SANITY_FAILED: 422, BASIS_UNKNOWN: 422, NOT_AN_IMAGE: 400, EMPTY_IMAGE: 400, UNSUPPORTED_TYPE: 400, TOO_LARGE: 413 };
+const STATUS = { NOT_A_LABEL: 422, NEED_BACK_LABEL: 422, OIL_SOON: 422, NOTHING_FOUND: 422, SANITY_FAILED: 422, BASIS_UNKNOWN: 422, NOT_AN_IMAGE: 400, EMPTY_IMAGE: 400, UNSUPPORTED_TYPE: 400, TOO_LARGE: 413 };
 
 router.post('/', scanLimiter, (req, res) => {
   upload.single('photo')(req, res, async (uploadErr) => {

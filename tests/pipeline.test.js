@@ -46,9 +46,9 @@ describe('Full pipeline (no network: Gemini mocked)', () => {
     expect(out.replyText).toContain(TEMPLATES.LABEL_ISSUE);
   });
 
-  test('not a label -> NOT_A_LABEL error', async () => {
+  test('not a label -> NOTHING_FOUND error', async () => {
     await expect(runPipeline({}, {}, { extract: fakeExtract({ label_found: false }) }))
-      .rejects.toMatchObject({ code: 'NOT_A_LABEL' });
+      .rejects.toMatchObject({ code: 'NOTHING_FOUND' });
   });
 
   test('numbers that do not add up -> SANITY_FAILED', async () => {

@@ -53,7 +53,8 @@ app.use(
     index: 'index.html',
     maxAge: '1h',
     setHeaders(res, filePath) {
-      if (filePath.endsWith('sw.js')) res.setHeader('Cache-Control', 'no-cache');
+      // HTML, service worker and app code must never be stale after an update.
+      if (/\.(html|js|css|json)$/.test(filePath)) res.setHeader('Cache-Control', 'no-cache');
     },
   })
 );

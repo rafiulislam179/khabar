@@ -9,7 +9,7 @@
   <link rel="manifest" href="/manifest.json">
   <link rel="icon" href="/icons/icon-192.png">
   <link rel="apple-touch-icon" href="/icons/icon-192.png">
-  <link rel="stylesheet" href="/styles.css">
+  <link rel="stylesheet" href="/styles.css?v=5">
 </head>
 <body>
   <header class="top">
@@ -40,8 +40,8 @@
   <main>
     <!-- HOME -->
     <section id="home" class="card">
-      <h2>প্যাকেটের পেছনের <span class="hl">পুষ্টি-তালিকার</span> ছবি তুলুন</h2>
-      <p class="muted">চিপস, বিস্কুট, নুডলস, চানাচুর, পানীয় — লবণ, চিনি আর চর্বি কতটা, বাংলায় জানুন।</p>
+      <h2>যেকোনো <span class="hl">খাবারের</span> ছবি দিন</h2>
+      <p class="muted">প্যাকেটের পুষ্টি-তালিকা, প্যাকেটের সামনের দিক, বা রেস্টুরেন্ট/বাসার খাবারের প্লেট — বাংলায় জানুন কতটা স্বাস্থ্যকর।</p>
 
       <fieldset class="mode" aria-label="মোড">
         <label><input type="radio" name="mode" value="general" checked> সাধারণ</label>
@@ -59,11 +59,11 @@
         </label>
       </div>
       <input id="photoCamera" type="file" accept="image/*" capture="environment" hidden>
-      <input id="photoGallery" type="file" accept="image/jpeg,image/png,image/webp" hidden>
+      <input id="photoGallery" type="file" accept="image/*" hidden>
 
       <ul class="tips">
         <li>আলোতে, কাছে থেকে তুলুন</li>
-        <li>পুরো টেবিলটা ফ্রেমে রাখুন</li>
+        <li>প্লেট হলে উপর থেকে পুরো প্লেট ফ্রেমে রাখুন</li>
         <li>ঝাপসা হলে আবার তুলুন</li>
       </ul>
     </section>
@@ -72,7 +72,7 @@
     <section id="loading" class="card center" hidden>
       <img id="preview" class="preview" alt="আপনার তোলা ছবি">
       <div class="spinner" aria-hidden="true"></div>
-      <p>লেবেল পড়া হচ্ছে…</p>
+      <p>ছবি দেখা হচ্ছে…</p>
       <p class="muted small">সাধারণত ৫–১৫ সেকেন্ড লাগে</p>
     </section>
 
@@ -93,6 +93,22 @@
 
       <p class="muted small">এটি চিকিৎসা পরামর্শ নয়। সাধারণ স্বাস্থ্য-নির্দেশিকা মাত্র।</p>
       <button id="againBtn" class="secondary">আরেকটা স্ক্যান করুন</button>
+    </section>
+
+    <!-- MEAL RESULT -->
+    <section id="mealResult" class="card" hidden aria-live="polite">
+      <div id="mealVerdict" class="verdict">
+        <span class="dot"></span>
+        <span id="mealVerdictText"></span>
+      </div>
+      <div class="kcal-total">
+        <span class="muted small">মোট আনুমানিক ক্যালরি</span>
+        <strong id="mealTotal"></strong>
+      </div>
+      <div id="mealItems" class="meal-items"></div>
+      <div class="message" id="mealTip"></div>
+      <p class="muted small">⚠️ ছবি দেখে আনুমানিক হিসাব — আসল ক্যালরি রান্না ও পরিমাণ অনুযায়ী কম-বেশি হতে পারে। পরিমাণ ঠিক না হলে ছোট/মাঝারি/বড় বদলে দিন।</p>
+      <button id="mealAgainBtn" class="secondary">আরেকটা স্ক্যান করুন</button>
     </section>
 
     <!-- ERROR -->
@@ -117,8 +133,8 @@
     </section>
   </main>
 
-  <footer class="foot">খাবার চেক · NSU Public Health 101 প্রজেক্ট</footer>
+  <footer class="foot">খাবার চেক · NSU Public Health 101 প্রজেক্ট · <span id="appVersion">v5</span></footer>
 
-  <script src="/app.js" defer></script>
+  <script src="/app.js?v=5" defer></script>
 </body>
 </html>
