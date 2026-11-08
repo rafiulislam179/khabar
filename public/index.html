@@ -9,7 +9,7 @@
   <link rel="manifest" href="/manifest.json">
   <link rel="icon" href="/icons/icon-192.png">
   <link rel="apple-touch-icon" href="/icons/icon-192.png">
-  <link rel="stylesheet" href="/styles.css?v=5">
+  <link rel="stylesheet" href="/styles.css?v=6">
 </head>
 <body>
   <header class="top">
@@ -40,6 +40,7 @@
   <main>
     <!-- HOME -->
     <section id="home" class="card">
+      <button id="goalsBtn" type="button" class="goal-pill">🎯 <span id="goalsSummary">আমার লক্ষ্য ঠিক করুন</span></button>
       <h2>যেকোনো <span class="hl">খাবারের</span> ছবি দিন</h2>
       <p class="muted">প্যাকেটের পুষ্টি-তালিকা, প্যাকেটের সামনের দিক, বা রেস্টুরেন্ট/বাসার খাবারের প্লেট — বাংলায় জানুন কতটা স্বাস্থ্যকর।</p>
 
@@ -68,6 +69,38 @@
       </ul>
     </section>
 
+    <!-- TODAY (meals added today, this phone only) -->
+    <section id="todayCard" class="card" hidden>
+      <h3>আজ যা খেয়েছেন (আনুমানিক)</h3>
+      <div class="today-total"><strong id="todayTotal"></strong><span id="todayBudget" class="muted small"></span></div>
+      <div class="bar"><span id="todayBar"></span></div>
+      <ul id="todayList" class="history"></ul>
+      <button id="todayClear" type="button" class="link">আজকের তালিকা মুছুন</button>
+    </section>
+
+    <!-- GOALS -->
+    <section id="goals" class="card" hidden>
+      <h2>🎯 আমার লক্ষ্য</h2>
+      <p class="muted small">সর্বোচ্চ ৩টা বেছে নিন। এই তথ্য শুধু আপনার ফোনেই থাকে, আমাদের কাছে যায় না।</p>
+      <div id="goalOptions" class="goal-options"></div>
+      <h3>আপনি</h3>
+      <fieldset class="mode" aria-label="লিঙ্গ">
+        <label><input type="radio" name="sex" value="male"> পুরুষ</label>
+        <label><input type="radio" name="sex" value="female"> নারী</label>
+        <label><input type="radio" name="sex" value="skip" checked> বলব না</label>
+      </fieldset>
+      <h3>সারাদিন কতটা নড়াচড়া করেন?</h3>
+      <fieldset class="mode" aria-label="নড়াচড়া">
+        <label><input type="radio" name="activity" value="low"> কম (বসে কাজ)</label>
+        <label><input type="radio" name="activity" value="med" checked> মাঝারি</label>
+        <label><input type="radio" name="activity" value="high"> বেশি</label>
+      </fieldset>
+      <p id="budgetPreview" class="muted small"></p>
+      <p class="muted small">⚠️ ডায়াবেটিস, প্রেশার, হার্ট বা কিডনির রোগ থাকলে, গর্ভবতী হলে, বা ১৮ বছরের কম হলে — ডাক্তারের পরামর্শই আগে। এটি চিকিৎসা পরামর্শ নয়।</p>
+      <button id="goalsSave" type="button" class="cta">সেভ করুন</button>
+      <button id="goalsCancel" type="button" class="secondary">ফিরে যান</button>
+    </section>
+
     <!-- LOADING -->
     <section id="loading" class="card center" hidden>
       <img id="preview" class="preview" alt="আপনার তোলা ছবি">
@@ -87,6 +120,10 @@
         <span id="verdictText"></span>
       </div>
 
+      <div id="labelAdvice" class="advice" hidden>
+        <div class="advice-head">🎯 আপনার লক্ষ্যের জন্য: <span id="labelAdviceVerdict"></span></div>
+        <ul id="labelAdviceLines"></ul>
+      </div>
       <div class="rows" id="rows"></div>
 
       <div class="message" id="message"></div>
@@ -106,6 +143,11 @@
         <strong id="mealTotal"></strong>
       </div>
       <div id="mealItems" class="meal-items"></div>
+      <div id="mealAdvice" class="advice" hidden>
+        <div class="advice-head">🎯 আপনার লক্ষ্যের জন্য: <span id="mealAdviceVerdict"></span></div>
+        <ul id="mealAdviceLines"></ul>
+      </div>
+      <button id="addToday" type="button" class="cta">➕ আজকের খাবারে যোগ করুন</button>
       <div class="message" id="mealTip"></div>
       <p class="muted small">⚠️ ছবি দেখে আনুমানিক হিসাব — আসল ক্যালরি রান্না ও পরিমাণ অনুযায়ী কম-বেশি হতে পারে। পরিমাণ ঠিক না হলে ছোট/মাঝারি/বড় বদলে দিন।</p>
       <button id="mealAgainBtn" class="secondary">আরেকটা স্ক্যান করুন</button>
@@ -133,8 +175,9 @@
     </section>
   </main>
 
-  <footer class="foot">খাবার চেক · NSU Public Health 101 প্রজেক্ট · <span id="appVersion">v5</span></footer>
+  <footer class="foot">খাবার চেক · NSU Public Health 101 প্রজেক্ট · <span id="appVersion">v6</span></footer>
 
-  <script src="/app.js?v=5" defer></script>
+  <script src="/advisor.js?v=6" defer></script>
+  <script src="/app.js?v=6" defer></script>
 </body>
 </html>

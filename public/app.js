@@ -1,21 +1,27 @@
 'use strict';
 (function () {
   const $ = (id) => document.getElementById(id);
-  const sections = ['home', 'loading', 'result', 'mealResult', 'error'];
+  const sections = ['home', 'goals', 'loading', 'result', 'mealResult', 'error'];
+  const ADV = window.KhabarAdvisor || null; // goals advisor (advisor.js)
 
-  // Show ANY unexpected error on screen (helps us find phone-only bugs).
-  function showFatal(msg) {
-    const box = $('errorText');
-    if (!box) return;
-    box.textContent = 'অ্যাপে সমস্যা হয়েছে। পেজ রিফ্রেশ করে আবার চেষ্টা করুন।';
-    const d = document.createElement('div');
-    d.className = 'debug';
-    d.textContent = `(${String(msg || 'unknown').slice(0, 160)})`;
-    box.append(d);
-    sections.forEach((s) => { const el = $(s); if (el) el.hidden = s !== 'error'; });
+  // Show OUR OWN unexpected errors as a small banner (helps find phone-only bugs).
+  // Errors from Telegram/browser add-ons are ignored so they never break the app.
+  function showBug(msg) {
+    let bar = $('bugBar');
+    if (!bar) {
+      bar = document.createElement('div');
+      bar.id = 'bugBar';
+      bar.className = 'bug-bar';
+      bar.addEventListener('click', () => bar.remove());
+      document.body.prepend(bar);
+    }
+    bar.textContent = `⚠️ অ্যাপে একটা সমস্যা হয়েছে (স্ক্রিনশট পাঠান, ট্যাপ করে বন্ধ করুন): ${String(msg || 'unknown').slice(0, 140)}`;
   }
-  window.addEventListener('error', (e) => showFatal(e.message));
-  window.addEventListener('unhandledrejection', (e) => showFatal(e.reason && (e.reason.message || e.reason)));
+  const OUR_FILES = /\/(app|advisor)\.js/;
+  window.addEventListener('error', (e) => {
+    if (!e || !e.filename || !OUR_FILES.test(e.filename) || e.filename.indexOf(location.origin) !== 0) return;
+    showBug(`${e.message} @${(e.filename.split('/').pop() || '').split('?')[0]}:${e.lineno}`);
+  });
 
   const LABEL = { GREEN: 'কম', AMBER: 'মাঝারি', RED: 'বেশি', UNKNOWN: 'তথ্য নেই' };
   const VERDICT = {
@@ -140,6 +146,8 @@
       rows.append(row);
     }
 
+    renderAdvice('labelAdvice', ADV && ADV.adviseLabel(loadProfile(), data.ratings, data.per100g));
+
     // textContent only: server text is never treated as HTML.
     $('message').textContent = data.message || '';
     show('result');
@@ -231,6 +239,138 @@
       it._kcalEl.textContent = `${amountText(it, k.amount)} · ${bn(k.min)}–${bn(k.max)} ক্যালরি`;
     });
     $('mealTotal').textContent = max > 0 ? `${bn(min)}–${bn(max)} ক্যালরি` : 'হিসাব করা যায়নি';
+    currentMeal._total = { min, max };
+    renderAdvice('mealAdvice', ADV && ADV.adviseMeal(loadProfile(), currentMeal, max > 0 ? max : NaN));
+    const add = $('addToday');
+    add.hidden = !(max > 0) || !ADV;
+    add.disabled = !!currentMeal._added;
+    add.textContent = currentMeal._added ? '✔ যোগ হয়েছে' : '➕ আজকের খাবারে যোগ করুন';
+  }
+
+  // --- Goals advisor UI ---
+  const ADVICE_VERDICT = { GREEN: '✅ ঠিক আছে', AMBER: '⚠️ অল্প খান', RED: '❌ এড়িয়ে চলুন', UNKNOWN: 'তথ্য কম' };
+  function renderAdvice(id, advice) {
+    const box = $(id);
+    if (!box) return;
+    if (!advice) { box.hidden = true; return; }
+    const v = $(`${id}Verdict`);
+    v.className = advice.verdict;
+    v.textContent = ADVICE_VERDICT[advice.verdict] || ADVICE_VERDICT.UNKNOWN;
+    const ul = $(`${id}Lines`);
+    ul.textContent = '';
+    advice.lines.forEach((t) => { const li = document.createElement('li'); li.textContent = t; ul.append(li); });
+    box.hidden = false;
+  }
+
+  const PROFILE_KEY = 'khabar-goals-v1';
+  function readStoredProfile() {
+    let raw = null;
+    try { raw = JSON.parse(localStorage.getItem(PROFILE_KEY) || 'null'); } catch { raw = null; }
+    return ADV ? ADV.cleanProfile(raw) : { goals: [] };
+  }
+  function saveProfile(p) {
+    try { localStorage.setItem(PROFILE_KEY, JSON.stringify(p)); } catch { /* storage blocked: works this session only */ }
+    sessionProfile = p;
+  }
+  let sessionProfile = null;
+  // If storage is blocked, fall back to what was saved this session.
+  function loadProfile() {
+    const p = readStoredProfile();
+    return p.goals.length || !sessionProfile ? p : sessionProfile;
+  }
+
+  function renderGoalsSummary() {
+    if (!ADV) { $('goalsBtn').hidden = true; return; }
+    const p = loadProfile();
+    $('goalsSummary').textContent = p.goals.length
+      ? `আমার লক্ষ্য: ${p.goals.map((g) => ADV.GOALS[g].icon + ' ' + ADV.GOALS[g].bn.split(' (')[0]).join(', ')}`
+      : 'আমার লক্ষ্য ঠিক করুন';
+  }
+  function readGoalsForm() {
+    const goals = [...document.querySelectorAll('#goalOptions input:checked')].map((i) => i.value);
+    const sex = (document.querySelector('input[name="sex"]:checked') || {}).value;
+    const activity = (document.querySelector('input[name="activity"]:checked') || {}).value;
+    return ADV.cleanProfile({ goals, sex, activity });
+  }
+  function updateBudgetPreview() {
+    $('budgetPreview').textContent = `দিনে আনুমানিক ক্যালরি: ~${bn(ADV.dailyBudget(readGoalsForm()))} (সাধারণ প্রাপ্তবয়স্কের হিসাব)`;
+  }
+  function openGoals() {
+    const p = loadProfile();
+    const box = $('goalOptions');
+    box.textContent = '';
+    Object.entries(ADV.GOALS).forEach(([key, g]) => {
+      const label = document.createElement('label');
+      const input = document.createElement('input');
+      input.type = 'checkbox';
+      input.value = key;
+      input.checked = p.goals.includes(key);
+      input.addEventListener('change', () => {
+        const checked = document.querySelectorAll('#goalOptions input:checked');
+        if (checked.length > 3) input.checked = false; // max 3
+        updateBudgetPreview();
+      });
+      const text = document.createElement('span');
+      text.textContent = `${g.icon} ${g.bn}`;
+      label.append(input, text);
+      box.append(label);
+    });
+    document.querySelectorAll('input[name="sex"]').forEach((i) => { i.checked = i.value === p.sex; });
+    document.querySelectorAll('input[name="activity"]').forEach((i) => { i.checked = i.value === p.activity; });
+    updateBudgetPreview();
+    show('goals');
+  }
+
+  // --- Today's log ---
+  const TODAY_KEY = 'khabar-today-v1';
+  let sessionLog = null;
+  function loadLog() {
+    let raw = null;
+    try { raw = JSON.parse(localStorage.getItem(TODAY_KEY) || 'null'); } catch { raw = null; }
+    return ADV.cleanLog(raw || sessionLog);
+  }
+  function saveLog(log) {
+    sessionLog = log;
+    try { localStorage.setItem(TODAY_KEY, JSON.stringify(log)); } catch { /* ignore */ }
+  }
+  function renderToday() {
+    const card = $('todayCard');
+    if (!ADV) { card.hidden = true; return; }
+    const log = loadLog();
+    card.hidden = log.items.length === 0;
+    if (!log.items.length) return;
+    const t = ADV.logTotal(log);
+    const budget = ADV.dailyBudget(loadProfile());
+    $('todayTotal').textContent = `${bn(t.min)}–${bn(t.max)} ক্যালরি`;
+    $('todayBudget').textContent = `আপনার দিনের আনুমানিক সীমা: ~${bn(budget)} ক্যালরি`;
+    const mid = (t.min + t.max) / 2;
+    const bar = $('todayBar');
+    bar.style.width = `${Math.min(100, Math.round((mid / budget) * 100))}%`;
+    bar.className = mid > budget ? 'RED' : mid > budget * 0.8 ? 'AMBER' : '';
+    const ul = $('todayList');
+    ul.textContent = '';
+    log.items.forEach((i) => {
+      const li = document.createElement('li');
+      const a = document.createElement('span');
+      a.textContent = i.name;
+      const b = document.createElement('span');
+      b.className = 'muted small';
+      b.textContent = `${bn(i.min)}–${bn(i.max)}`;
+      li.append(a, b);
+      ul.append(li);
+    });
+  }
+  function addMealToToday() {
+    if (!ADV || !currentMeal || currentMeal._added || !currentMeal._total || !(currentMeal._total.max > 0)) return;
+    currentMeal._added = true;
+    const log = loadLog();
+    const name = currentMeal.items.filter((i) => i.known).map((i) => i.name).join(', ').slice(0, 60);
+    log.items.push({ name, min: currentMeal._total.min, max: currentMeal._total.max });
+    saveLog(ADV.cleanLog(log));
+    renderToday();
+    const add = $('addToday');
+    add.disabled = true;
+    add.textContent = '✔ যোগ হয়েছে';
   }
 
   // --- History (this phone only; optional; safe if storage is blocked) ---
@@ -282,6 +422,19 @@
   });
   $('againBtn').addEventListener('click', () => show('home'));
   if ($('mealAgainBtn')) $('mealAgainBtn').addEventListener('click', () => show('home'));
+  if (ADV) {
+    $('goalsBtn').addEventListener('click', openGoals);
+    $('goalsCancel').addEventListener('click', () => show('home'));
+    $('goalsSave').addEventListener('click', () => {
+      saveProfile(readGoalsForm());
+      renderGoalsSummary();
+      renderToday();
+      show('home');
+    });
+    document.querySelectorAll('input[name="sex"], input[name="activity"]').forEach((i) => i.addEventListener('change', updateBudgetPreview));
+    $('addToday').addEventListener('click', addMealToToday);
+    $('todayClear').addEventListener('click', () => { saveLog({ date: ADV.todayKey(), items: [] }); renderToday(); });
+  }
   $('retryBtn').addEventListener('click', () => show('home'));
 
   // --- Install as app (Android Chrome) ---
@@ -304,4 +457,6 @@
   }
 
   renderHistory();
+  renderGoalsSummary();
+  renderToday();
 })();
